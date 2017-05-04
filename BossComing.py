@@ -38,36 +38,57 @@ class DetectTread (threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self)
     def run(self):
-        # Get a reference to webcam #0 (the default one)
         video_capture = cv2.VideoCapture(0)
 
         # Load a sample picture and learn how to recognize it.
         obama_image = face_recognition.load_image_file("IMG_1778.JPG")
         obama_face_encoding = face_recognition.face_encodings(obama_image)[0]
 
+        # Initialize some variables
+        face_locations = []
+        face_encodings = []
+        face_names = []
+        i = 0
+        process_this_frame = True
+
         while True:
             # Grab a single frame of video
             ret, frame = video_capture.read()
 
-            # Find all the faces and face enqcodings in the frame of video
-            face_locations = face_recognition.face_locations(frame)
-            face_encodings = face_recognition.face_encodings(frame, face_locations)
+            # Resize frame of video to 1/4 size for faster face recognition processing
+            small_frame = cv2.resize(frame, (0, 0), fx=0.25, fy=0.25)
 
-            # Loop through each face in this frame of video
-            for (top, right, bottom, left), face_encoding in zip(face_locations, face_encodings):
-                # See if the face is a match for the known face(s)
-                match = face_recognition.compare_faces([obama_face_encoding], face_encoding, tolerance=0.5)
+            # Only process every other frame of video to save time
+            if process_this_frame:
+                # Find all the faces and face encodings in the current frame of video
+                face_locations = face_recognition.face_locations(small_frame)
+                face_encodings = face_recognition.face_encodings(small_frame, face_locations)
 
-                name = "Idiot"
-                if match[0]:
-                    name = "Boss"
-                    print('Zengjinjie is coming')
-                    global s
-                    s = True
-                    # global s
-                    # mutex.acquire()
-                    # s = True
-                    # mutex.release()
+                face_names = []
+                for face_encoding in face_encodings:
+                    # See if the face is a match for the known face(s)
+                    match = face_recognition.compare_faces([obama_face_encoding], face_encoding)
+                    name = "Unknown"
+
+                    if match[0]:
+                        name = "Boss"
+                        i = i + 1
+                        print('Zengjinjie is coming')
+                        print(i)
+                        global s
+                        s = True
+
+                    face_names.append(name)
+
+            process_this_frame = not process_this_frame
+
+            # Display the results
+            for (top, right, bottom, left), name in zip(face_locations, face_names):
+                # Scale back up face locations since the frame we detected in was scaled to 1/4 size
+                top *= 4
+                right *= 4
+                bottom *= 4
+                left *= 4
 
                 # Draw a box around the face
                 cv2.rectangle(frame, (left, top), (right, bottom), (0, 0, 255), 2)
