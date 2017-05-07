@@ -41,7 +41,9 @@ class DetectTread (threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self)
     def run(self):
-        stream = urllib.request.urlopen('http://192.168.2.112:8080/video')
+        xiaomi_url = 'http://192.168.2.112:8080/video'
+        meizu_url = 'http://192.168.1.152:8080/video'
+        stream = urllib.request.urlopen(meizu_url)
         bytes1= bytes()
 
         # Load a sample picture and learn how to recognize it.
@@ -75,7 +77,7 @@ class DetectTread (threading.Thread):
                     face_names = []
                     for face_encoding in face_encodings:
                         # See if the face is a match for the known face(s)
-                        match = face_recognition.compare_faces([obama_face_encoding], face_encoding)
+                        match = face_recognition.compare_faces([obama_face_encoding], face_encoding, tolerance=0.4)
                         name = "Unknown"
 
                         if match[0]:
