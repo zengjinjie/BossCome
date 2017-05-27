@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 import urllib.request
 import numpy as np
 import face_recognition
@@ -10,12 +12,16 @@ import time
 
 async def notify(websocket, path):
     while True:
-        global s
+        global s, s1
         # print(s)
         if(s):
             await websocket.send("Boss is coming")
             s = False
         await asyncio.sleep(1)
+        if(s1):
+            await websocket.send("zhaoyun is coming")
+            s1 = False
+        await asyncio.sleep(0.1)
 
 class DetectThread(threading.Thread):
     def __init__(self):
@@ -23,8 +29,12 @@ class DetectThread(threading.Thread):
 
     def run(self):
         realsystem_url = "http://219.242.112.243:8080/shot.jpg"
-        boss_image = face_recognition.load_image_file("IMG_1778.JPG")
+        boss_image = face_recognition.load_image_file("zengjinjie.jpg")
+        other_image = face_recognition.load_image_file("zhaoyun.jpg")
         boss_face_encoding = face_recognition.face_encodings(boss_image)[0]
+        other_face_encoding = face_recognition.face_encodings(other_image)[0]
+        known_face_encodings = [boss_face_encoding, other_face_encoding]
+
         face_locaions = []
         face_encodings = []
         face_names = []
@@ -41,19 +51,24 @@ class DetectThread(threading.Thread):
 
                 face_names = []
                 for face_encoding in face_encodings:
-                    match = face_recognition.compare_faces([boss_face_encoding], face_encoding, tolerance=0.4)
+                    match = face_recognition.compare_faces(known_face_encodings, face_encoding, tolerance=0.4)
                     name = "Unknown"
                     if match[0]:
                         name = "Boss"
                         print("Boss is coming")
                         global s
                         s = True
+                    if match[1]:
+                        print("zhaoyun is coming")
+                        global s1
+                        s1 = True
                 k += 1
                 # print(k)
 
 def main():
-    global s
+    global s, s1
     s = False
+    s1 = False
     detectThread = DetectThread()
     detectThread.start()
     print("Detect thread started")
