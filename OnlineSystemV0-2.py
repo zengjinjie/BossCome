@@ -13,12 +13,17 @@ import websockets
 import threading
 import time
 
+connected = set()
+
 def notice(q):
     async def notify(websocket, path):
+        global connected
+        connected.add(websocket)
         while True:
             value = q.get(True)
             print("Get %s from queue." %value)
-            await websocket.send("Boss is coming for %s times" %value)
+            print(len(connected))
+            await asyncio.wait([ws.send("Boss is coming for %s times" %value) for ws in connected])
             await asyncio.sleep(0.1)
 
     start_server = websockets.serve(notify, '10.8.0.10', 5678)
